@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title></title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/3.31/esri/css/jsapi.css" />
+
+    <style>
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'News Cycle', sans-serif;
+            font-size: 0.90em;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script src="https://js.arcgis.com/3.31/"></script>
+
+    <script>
+        //当前版本存在放大超出屏幕范围时，地图移动后屏幕外的线未渲染
+        require([
+            "esri/map",
+            "dojo/on",
+            "esri/geometry/Point",
+            "esri/SpatialReference"
+        ], function (Map, on, Point, SpatialReference) {
+            var lineData = null;
+            //读取geojson
+            var xy = [];
+            $.ajax({
+                type: "GET",
+                url: "data/map.geojson",
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $.each(data.features[0].geometry.coordinates, function (i, value) {
+                        xy.push(value);
+                    })
+                }
+            })
+            //创建地图实例
+            var map = new Map("map", {
+                basemap: "gray",
+                center: [117.058725, 36.664081],
+                zoom: 13
+            });
+            //保证dom渲染完毕后操作
+            window.onload = function () {
+
+                drawLine(lineData);
+                map.on("zoom-start", clearSVG);
+                map.on("zoom-end", drawLine);
+                // map.on("pan-start", clearSVG);
+                // map.on("pan-end", panEnd);
+            }
+            //zoom与pan事件重置线要素
+            function clearSVG(evt) {
+                d3.select("#d3_svg").remove();
+            }
+
+            // function panEnd(evt) {
+            //     console.log(evt.delta)
+            //    // console.log(beforeCorrection);
+            //     var afterCorrection = [];
+            //     beforeCorrection = lineData;
+            //     var beforeCorrection=coordinateToScreen();
+            //     $.each(beforeCorrection, function (i, item) {
+            //         var x = item.x - evt.delta.x;
+            //         var y = item.y - evt.delta.y;
+            //         afterCorrection.push({x,y});
+            //     })
+            //     console.log(afterCorrection)
+            //     drawLine(afterCorrection);
+            // }
+            //d3绘制渐变色线要素
+            function drawLine() {
+                //数据
+                var lineData = coordinateToScreen();
+                //线生成器
+                var lineFunction = d3.svg.line()
+                    .x(function (d) {
+                        return d.x;
+                    })
+                    .y(function (d) {
+                        return d.y;
+                    })
+                    .interpolate("linear");
+                //svg容器
+                var svgContainer = d3.select("#map_gc")
+                    .attr("class", "svgTransform")
+                    .append("svg")
+                    .attr("id", "d3_svg");
+                // 定义渐变色带，可以参考SVG的定义
+                var a = d3.rgb(255, 0, 0); //红色
+                var b = d3.rgb(0, 255, 0); //绿色
+                var defs = svgContainer.append("defs");
+                var linerGradient = defs.append("linearGradient")
+                    .attr("id", "linearColor")
+                    .attr("x1", "0%")
+                    .attr("y1", "0%")
+                    .attr("x2", "100%")
+                    .attr("y2", "0%");
+                var stop1 = linerGradient.append("stop")
+                    .attr("offset", "0%")
+                    .style("stop-color", a.toString());
+                var stop2 = linerGradient.append("stop")
+                    .attr("offset", "100%")
+                    .style("stop-color", b.toString());
+                //把path扔到容器中-- lineData和lineFunction，并给d赋属性
+                var lineGraph = svgContainer.append("path")
+                    .attr("d", lineFunction(lineData))
+                    // 线的渐变使用参数为stroke
+                    .attr("stroke", "url(#" + linerGradient.attr("id") + ")")
+                    .attr("stroke-width", 3)
+                    .attr("fill", "none");
+            }
+            //将经纬度坐标转屏幕坐标
+            function coordinateToScreen() {
+                var screen = [];
+                $.each(xy, function (i, item) {
+                    var lonPoint = new Point(item[0], item[1], new SpatialReference({
+                        wkid: 4326
+                    }));
+                    screen.push(map.toScreen(lonPoint));
+                })
+                return screen;
+            }
+        });
+    </script>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div id="xx"></div>
+</body>
+
+</html>
