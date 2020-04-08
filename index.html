@@ -98,34 +98,77 @@
                         return d.y;
                     })
                     .interpolate("linear");
-                //svg容器
-                var svgContainer = d3.select("#map_gc")
-                    .attr("class", "svgTransform")
-                    .append("svg")
-                    .attr("id", "d3_svg");
                 // 定义渐变色带，可以参考SVG的定义
                 var a = d3.rgb(255, 0, 0); //红色
                 var b = d3.rgb(0, 255, 0); //绿色
-                var defs = svgContainer.append("defs");
-                var linerGradient = defs.append("linearGradient")
-                    .attr("id", "linearColor")
-                    .attr("x1", "0%")
-                    .attr("y1", "0%")
-                    .attr("x2", "100%")
-                    .attr("y2", "0%");
-                var stop1 = linerGradient.append("stop")
-                    .attr("offset", "0%")
-                    .style("stop-color", a.toString());
-                var stop2 = linerGradient.append("stop")
-                    .attr("offset", "100%")
-                    .style("stop-color", b.toString());
-                //把path扔到容器中-- lineData和lineFunction，并给d赋属性
-                var lineGraph = svgContainer.append("path")
-                    .attr("d", lineFunction(lineData))
-                    // 线的渐变使用参数为stroke
-                    .attr("stroke", "url(#" + linerGradient.attr("id") + ")")
-                    .attr("stroke-width", 3)
-                    .attr("fill", "none");
+
+
+                //test
+                var temp=[];
+                $.each(lineData,function(i,item){
+                    temp.push([lineData[i],lineData[i+1]])
+                })
+                $.each(temp, function (j, jitem) {
+                    console.log(jitem)
+                    var svgContainer = d3.select("#map_gc")
+                        .attr("class", "svgTransform")
+                        .append("svg")
+                        .attr("id", "d3_svg"+j);
+
+                    var defs = svgContainer.append("defs");
+                    var linerGradient = defs.append("linearGradient")
+                        .attr("id", "linearColor")
+                        .attr("x1", "0%")
+                        .attr("y1", "0%")
+                        .attr("x2", "100%")
+                        .attr("y2", "0%");
+
+                    var m = 100 / temp.length;
+                    var start = 100 - j * m;
+                    var end = start - m;
+
+                    var stop1 = linerGradient.append("stop")
+                        .attr("offset", start + "%")
+                        .style("stop-color", a.toString());
+                    var stop2 = linerGradient.append("stop")
+                        .attr("offset", end + "%")
+                        .style("stop-color", b.toString());
+                    //把path扔到容器中-- lineData和lineFunction，并给d赋属性
+                    var lineGraph = svgContainer.append("path")
+                        .attr("d", lineFunction(jitem))
+                        // 线的渐变使用参数为stroke
+                        .attr("stroke", "url(#" + linerGradient.attr("id") + ")")
+                        .attr("stroke-width", 3)
+                        .attr("fill", "none");
+
+                })
+                //svg容器
+                // var svgContainer = d3.select("#map_gc")
+                //     .attr("class", "svgTransform")
+                //     .append("svg")
+                //     .attr("id", "d3_svg");
+
+                // var defs = svgContainer.append("defs");
+
+                // var linerGradient = defs.append("linearGradient")
+                //     .attr("id", "linearColor")
+                //     .attr("x1", "0%")
+                //     .attr("y1", "0%")
+                //     .attr("x2", "100%")
+                //     .attr("y2", "0%");
+                // var stop1 = linerGradient.append("stop")
+                //     .attr("offset", "0%")
+                //     .style("stop-color", a.toString());
+                // var stop2 = linerGradient.append("stop")
+                //     .attr("offset", "100%")
+                //     .style("stop-color", b.toString());
+                // //把path扔到容器中-- lineData和lineFunction，并给d赋属性
+                // var lineGraph = svgContainer.append("path")
+                //     .attr("d", lineFunction(lineData))
+                //     // 线的渐变使用参数为stroke
+                //     .attr("stroke", "url(#" + linerGradient.attr("id") + ")")
+                //     .attr("stroke-width", 3)
+                //     .attr("fill", "none");
             }
             //将经纬度坐标转屏幕坐标
             function coordinateToScreen() {
