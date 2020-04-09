@@ -107,9 +107,7 @@
                     temp.push([lineData[index], lineData[index + 1]]);
                 }
                 var getColor = setColor(temp.length);
-                console.log(getColor);
                 $.each(temp, function (j, jitem) {
-                    console.log(jitem)
                     var svgContainer = d3.select("#map_gc")
                         .attr("class", "svgTransform")
                         .append("svg")
