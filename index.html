@@ -37,9 +37,9 @@
             "esri/geometry/Point",
             "esri/SpatialReference"
         ], function (Map, on, Point, SpatialReference) {
-            var lineData = null;
+
             //读取geojson
-            var xy = [];
+            const xy = [];
             $.ajax({
                 type: "GET",
                 url: "data/map.geojson",
@@ -60,7 +60,7 @@
             //保证dom渲染完毕后操作
             window.onload = function () {
 
-                drawLine(lineData);
+                drawLine();
                 map.on("zoom-start", clearSVG);
                 map.on("zoom-end", drawLine);
                 // map.on("pan-start", clearSVG);
@@ -68,7 +68,9 @@
             }
             //zoom与pan事件重置线要素
             function clearSVG(evt) {
-                d3.select("#d3_svg").remove();
+                for (let index = 0; index < xy.length - 1; index++) {
+                    d3.select("#d3_svg" + index).remove();
+                }
             }
 
             // function panEnd(evt) {
@@ -98,40 +100,42 @@
                         return d.y;
                     })
                     .interpolate("linear");
-                // 定义渐变色带，可以参考SVG的定义
-                var a = d3.rgb(255, 0, 0); //红色
-                var b = d3.rgb(0, 255, 0); //绿色
 
-
-                //test
-                var temp=[];
-                $.each(lineData,function(i,item){
-                    temp.push([lineData[i],lineData[i+1]])
-                })
+                //路径分段
+                var temp = [];
+                for (let index = 0; index < lineData.length - 1; index++) {
+                    temp.push([lineData[index], lineData[index + 1]]);
+                }
+                var getColor = setColor(temp.length);
+                console.log(getColor);
                 $.each(temp, function (j, jitem) {
                     console.log(jitem)
                     var svgContainer = d3.select("#map_gc")
                         .attr("class", "svgTransform")
                         .append("svg")
-                        .attr("id", "d3_svg"+j);
+                        .attr("id", "d3_svg" + j);
 
                     var defs = svgContainer.append("defs");
                     var linerGradient = defs.append("linearGradient")
-                        .attr("id", "linearColor")
-                        .attr("x1", "0%")
-                        .attr("y1", "0%")
-                        .attr("x2", "100%")
-                        .attr("y2", "0%");
+                        .attr("id", "linearColor" + j)
+                        .attr("x1", jitem[1].x)
+                        .attr("y1", jitem[1].y)
+                        .attr("x2", jitem[0].x)
+                        .attr("y2", jitem[0].y)
+                        .attr("gradientUnits",
+                            "userSpaceOnUse");
+                    //userSpaceOnUse用户坐标系统,（x1、y1）与（x2、y2）形成两个点,
+                    //两个点连接成一条轴线，确定元素的渐变区域与渐变方向
 
-                    var m = 100 / temp.length;
-                    var start = 100 - j * m;
-                    var end = start - m;
+                    //设置颜色
+                    var a = getColor[j + 1];
+                    var b = getColor[j];
 
                     var stop1 = linerGradient.append("stop")
-                        .attr("offset", start + "%")
+                        .attr("offset", "0%")
                         .style("stop-color", a.toString());
                     var stop2 = linerGradient.append("stop")
-                        .attr("offset", end + "%")
+                        .attr("offset", "100%")
                         .style("stop-color", b.toString());
                     //把path扔到容器中-- lineData和lineFunction，并给d赋属性
                     var lineGraph = svgContainer.append("path")
@@ -142,33 +146,6 @@
                         .attr("fill", "none");
 
                 })
-                //svg容器
-                // var svgContainer = d3.select("#map_gc")
-                //     .attr("class", "svgTransform")
-                //     .append("svg")
-                //     .attr("id", "d3_svg");
-
-                // var defs = svgContainer.append("defs");
-
-                // var linerGradient = defs.append("linearGradient")
-                //     .attr("id", "linearColor")
-                //     .attr("x1", "0%")
-                //     .attr("y1", "0%")
-                //     .attr("x2", "100%")
-                //     .attr("y2", "0%");
-                // var stop1 = linerGradient.append("stop")
-                //     .attr("offset", "0%")
-                //     .style("stop-color", a.toString());
-                // var stop2 = linerGradient.append("stop")
-                //     .attr("offset", "100%")
-                //     .style("stop-color", b.toString());
-                // //把path扔到容器中-- lineData和lineFunction，并给d赋属性
-                // var lineGraph = svgContainer.append("path")
-                //     .attr("d", lineFunction(lineData))
-                //     // 线的渐变使用参数为stroke
-                //     .attr("stroke", "url(#" + linerGradient.attr("id") + ")")
-                //     .attr("stroke-width", 3)
-                //     .attr("fill", "none");
             }
             //将经纬度坐标转屏幕坐标
             function coordinateToScreen() {
@@ -180,6 +157,20 @@
                     screen.push(map.toScreen(lonPoint));
                 })
                 return screen;
+            }
+            //设置渐变色带
+            function setColor(path_num) { //路径的段数
+                var result = [];
+                var startColor = [255, 0, 0]; //红色
+                var endColor = [0, 255, 0]; //绿色
+                var tempR = Math.floor((endColor[0] - startColor[0]) / path_num);
+                var tempG = Math.floor((endColor[1] - startColor[1]) / path_num);
+                var tempB = Math.floor((endColor[2] - startColor[2]) / path_num);
+                for (let i = 0; i < path_num + 1; i++) {
+                    result.push(d3.rgb(startColor[0] + i * tempR, startColor[1] + i *
+                        tempG, startColor[2] + i * tempB))
+                }
+                return result;
             }
         });
     </script>
