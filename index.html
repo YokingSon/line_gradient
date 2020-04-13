@@ -66,6 +66,7 @@
                 // map.on("pan-start", clearSVG);
                 // map.on("pan-end", panEnd);
             }
+            console.log(xy)
             //zoom与pan事件重置线要素
             function clearSVG(evt) {
                 for (let index = 0; index < xy.length - 1; index++) {
@@ -106,7 +107,7 @@
                 for (let index = 0; index < lineData.length - 1; index++) {
                     temp.push([lineData[index], lineData[index + 1]]);
                 }
-                var getColor = setColor(temp.length);
+                var getColor = setColor(temp.length,0.3,0.7);
                 $.each(temp, function (j, jitem) {
                     var svgContainer = d3.select("#map_gc")
                         .attr("class", "svgTransform")
@@ -156,11 +157,11 @@
                 })
                 return screen;
             }
-            //设置渐变色带
-            function setColor(path_num) { //路径的段数
+            //根据两端值设置渐变色带
+            function setColor(path_num, a, b) { //路径的段数
                 var result = [];
-                var startColor = [255, 0, 0]; //红色
-                var endColor = [0, 255, 0]; //绿色
+                var startColor = [255 * a, 255 - 255 * a, 0]; 
+                var endColor = [255 * b, 255 - 255 * b, 0]; 
                 var tempR = Math.floor((endColor[0] - startColor[0]) / path_num);
                 var tempG = Math.floor((endColor[1] - startColor[1]) / path_num);
                 var tempB = Math.floor((endColor[2] - startColor[2]) / path_num);
